@@ -69,6 +69,7 @@ public class Transaction {
                 ", amount=" + amount +
                 '}';
     }
+
 }
 
 //date|time|description|vendor|amount
