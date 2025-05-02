@@ -1,4 +1,5 @@
 package com.ps;
+
 import java.io.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,6 +12,7 @@ import java.io.BufferedReader;
 
 public class Main {
     static Scanner scanner = new Scanner(System.in);
+
     public static void main(String[] args) {
 
         int mainMenuCommand;
@@ -22,7 +24,7 @@ public class Main {
             System.out.println("2) Make payment");
             System.out.println("3) Ledger");
             System.out.println("0) Exit");
-            System.out.println("What would you like to do?");
+            System.out.print("Choose an option: ");
 
             mainMenuCommand = scanner.nextInt();
             scanner.nextLine();
@@ -47,10 +49,11 @@ public class Main {
             }
 
 
-        } while(mainMenuCommand != 0);
+        } while (mainMenuCommand != 0);
 
 
     }
+
     private static void depositInfo() {
         LocalDate date = LocalDate.now();
         LocalTime time = LocalTime.now();
@@ -97,6 +100,7 @@ public class Main {
             }
         }
     }
+
     private static void makePaymentInfo() {
         LocalDate date = LocalDate.now();
         LocalTime time = LocalTime.now();
@@ -114,7 +118,7 @@ public class Main {
         System.out.print("Vendor: ");
         String vendor = scanner.nextLine();
 
-        BigDecimal amount = getValidAmount().negate();  // Payments are stored as negative amounts
+        BigDecimal amount = getValidAmount().negate();
 
         String record = String.join("|", formattedDate, formattedTime, description, vendor, amount.toString());
 
@@ -129,9 +133,9 @@ public class Main {
 
     private static void ledgerDisplay() {
         ArrayList<String> transactions = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader("transactions.csv"))){
+        try (BufferedReader reader = new BufferedReader(new FileReader("transactions.csv"))) {
             String line;
-            while ((line = reader.readLine()) != null){
+            while ((line = reader.readLine()) != null) {
                 transactions.add(line);
             }
         } catch (IOException e) {
@@ -147,16 +151,17 @@ public class Main {
             System.out.println("3) Payments only");
             System.out.println("4) Reports/Custom search");
             System.out.println("5) Home");
+            System.out.println("6) Show balance");
             System.out.print("Choose an option: ");
             try {
-                 command = Integer.parseInt(scanner.nextLine());
+                command = Integer.parseInt(scanner.nextLine());
 
             } catch (NumberFormatException e) {
                 System.out.println("Invalid" + e.getMessage());
                 continue;
             }
 
-            switch (command){
+            switch (command) {
                 case 1:
                     displayTransactions(transactions);
                     break;
@@ -172,15 +177,20 @@ public class Main {
                 case 5:
                     System.out.println("Returning...");
                     break;
+                case 6:
+                    displayBalance();
+                    break;
                 default:
                     System.out.println("Invalid, try again!");
             }
         } while (command != 5);
 
     }
+
+
     private static void displayTransactions(ArrayList<String> transactions) {
         System.out.println("\nAll Transactions:");
-        for (int i = transactions.size() -1; i >=0; i--){
+        for (int i = transactions.size() - 1; i >= 0; i--) {
             System.out.println(transactions.get(i));
         }
     }
@@ -219,17 +229,17 @@ public class Main {
             try {
                 BigDecimal amount = new BigDecimal(fields[4].trim());
 
-                if(amount.compareTo(BigDecimal.ZERO) < 0){
+                if (amount.compareTo(BigDecimal.ZERO) < 0) {
                     System.out.println(line);
                 }
 
-            } catch(NumberFormatException ignored){
+            } catch (NumberFormatException ignored) {
 
             }
         }
     }
 
-    private static void showAllReports(ArrayList<String> transactions)   {
+    private static void showAllReports(ArrayList<String> transactions) {
         int reportCommand = -1;
 
         do {
@@ -242,8 +252,85 @@ public class Main {
             System.out.println("0) Back");
             System.out.print("Please select an option: ");
 
-        }while (reportCommand != 0);
+            try {
+                reportCommand = Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid, enter a number");
+                continue;
+            }
+            switch (reportCommand) {
+                case 1:
+                    System.out.println("Month-to-Date report");
+                    break;
+                case 2:
+                    System.out.println("Previous month report");
+                    break;
+                case 3:
+                    System.out.println("Year-to-Date report");
+                    break;
+                case 4:
+                    System.out.println("Previous year report");
+                    break;
+                case 5:
+                    searchVendor(transactions);
+                    break;
+                case 0:
+                    System.out.println("Returning");
+                    break;
+                default:
+                    System.out.println("Invalid, try again!");
+            }
 
+        } while (reportCommand != 0);
+
+    }
+
+    private static void searchVendor(ArrayList<String> transactions) {
+        System.out.print("\nEnter vendor name: ");
+        String vendorSearch = scanner.nextLine().trim().toLowerCase();
+        System.out.println("\nTransactions by this vendor: " + vendorSearch);
+
+        boolean found = false;
+
+        for (String line : transactions) {
+            String[] fields = line.split("\\|");
+
+            if (fields.length != 5) continue;
+
+            String vendor = fields[3].trim().toLowerCase();
+
+            if (vendor.contains(vendorSearch)) {
+                System.out.println(line);
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("No transactions found for: " + vendorSearch);
+        }
+    }
+
+    //cool interesting code(right below)
+    private static void displayBalance() {
+         BigDecimal balance = BigDecimal.ZERO;
+
+         try (BufferedReader reader = new BufferedReader(new FileReader("transactions.csv"))) {
+             String line;
+             while ((line = reader.readLine()) != null) {
+                 String[] fields = line.split("\\|");
+                 if (fields.length != 5) continue;
+
+                 try {
+                     BigDecimal amount = new BigDecimal(fields[4].trim());
+                     balance = balance.add(amount);
+
+                 } catch(NumberFormatException e) {
+
+                 }
+             }
+             System.out.println("Your current balance is: $" + balance);
+         } catch (IOException e) {
+             System.out.println("Error");
+         }
     }
 
 }
